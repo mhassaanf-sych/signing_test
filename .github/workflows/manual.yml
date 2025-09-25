@@ -4,54 +4,38 @@ on:
   workflow_dispatch:
 
 jobs:
-  create-issue-pr:
+  sync-docs:
     runs-on: ubuntu-latest
     permissions:
-      issues: write        # GITHUB_TOKEN can still create issues
+      issues: write
       contents: write
+      pull-requests: write
+
     steps:
-      - name: Checkout target repo
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Generate issue content
-        run: echo "Sync Next.js docs directory into this repo" > issue.md
-
-      - name: Create Issue
-        uses: peter-evans/create-issue-from-file@v5
-        with:
-          title: "Sync Next.js Docs"
-          content-filepath: ./issue.md
-          labels: |
-            automated
-            docs
-
-      - name: Clone Next.js repo and copy docs
+      - name: Copy docs from Next.js
         run: |
           git clone --depth 1 https://github.com/vercel/next.js.git nextjs
-          rm -rf ./docs
-          cp -r nextjs/docs ./docs
-          rm -rf nextjs
+          rm -rf ./docs                   # remove old docs in your repo
+          cp -r nextjs/docs ./docs        # copy fresh docs
+          rm -rf nextjs                   # clean up
 
-      - name: Set branch name
-        id: vars
-        run: echo "branch=sync-nextjs-docs-$(date +%s)" >> $GITHUB_OUTPUT
-
-      - name: Commit and push changes
-        run: |
-          git config user.name github-actions
-          git config user.email github-actions@github.com
-          git checkout -b "${{ steps.vars.outputs.branch }}"
-          git add docs
-          git commit -m "Sync Next.js docs from vercel/next.js"
-          git push origin "${{ steps.vars.outputs.branch }}"
+      - name: Generate issue file
+        run: echo "Docs sync triggered" > output.md
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v6
         with:
-          token: ${{ secrets.ACTIONS_PAT }} # 👈 use your PAT secret
-          branch: ${{ steps.vars.outputs.branch }}
+          token: ${{ secrets.ACTIONS_PAT }}
+          branch: sync-nextjs-docs
           base: main
           title: "Sync Next.js Docs"
           body: |
-            This PR syncs the `docs` directory from [vercel/next.js](https://github.com/vercel/next.js).
-            Closes #${{ github.event.issue.number }}
+            This PR syncs the **docs** directory from vercel/next.js.
+
+            It also includes an auto-generated issue file for tracking.
+          add-paths: |
+            docs/**
+            output.md
