@@ -25,10 +25,12 @@ jobs:
             automated
             docs
 
-      - name: Clone Next.js repo
+      - name: Clone Next.js repo and copy docs
         run: |
           git clone --depth 1 https://github.com/vercel/next.js.git nextjs
+          rm -rf ./docs
           cp -r nextjs/docs ./docs
+          rm -rf nextjs
 
       - name: Set branch name
         id: vars
