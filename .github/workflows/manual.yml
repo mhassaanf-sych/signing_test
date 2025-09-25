@@ -11,7 +11,7 @@ jobs:
         uses: peter-evans/create-issue-from-file@v5
         with:
           title: An example issue
-          content-filepath: ./output.md
+          content-filepath: output.md
           labels: |
             report
             automated issue
